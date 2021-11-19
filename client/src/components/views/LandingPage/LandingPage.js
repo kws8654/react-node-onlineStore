@@ -11,6 +11,7 @@ function LandingPage() {
     const [Products, setProducts] = useState([])
     const [Skip, setSkip] = useState(0)
     const [Limit, setLimit] = useState(8)
+    const [PostSize, setPostSize] = useState(0)
 
     useEffect(() => {
 
@@ -18,22 +19,43 @@ function LandingPage() {
             skip: Skip,
             limit: Limit
         }
+        getProducts(body);
+    }, [])
 
+    const getProducts = (body) => {
         axios.post('/api/product/products', body)
             .then(response => {
                 if (response.data.success) {
-                    setProducts(response.data.productInfo)
+                    if (body.loadMore) {
+                        setProducts([...Products, ...response.data.productInfo])
+                    } else {
+                        setProducts(response.data.productInfo)
+                    }
+                    setPostSize(response.data.postSize)
                 } else {
                     alert("업로드 실패")
                 }
 
             })
-    }, [])
 
-    // const loadMoreHandler = () => {
+    }
+
+    const loadMoreHandler = () => {
 
 
-    // }
+        let skip = Skip + Limit
+
+        let body = {
+            skip: skip,
+            limit: Limit,
+            loadMore: true
+        }
+
+        getProducts(body);
+        setSkip(skip)
+
+
+    }
 
     const renderCards = Products.map((product, index) => {
 
@@ -52,16 +74,18 @@ function LandingPage() {
 
     return (
         <div style={{ width: '75%', margin: '3rem auto' }}>
-            <div style={{ textAlign: 'center ' }}>
+            <div style={{ textAlign: 'center' }}>
                 <h2>Let's Travel <Icon type="heart" /></h2>
             </div>
             <Row gutter={[16, 16]}>
                 {renderCards}
             </Row>
-
-            <div style={{ display: "flex", justifyContent: "center" }}>
-                <button onClick={loadMoreHandler}>more</button>
-            </div>
+            <br />
+            {PostSize >= Limit &&
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button onClick={loadMoreHandler}>more</button>
+                </div>
+            }
         </div>
     )
 }
